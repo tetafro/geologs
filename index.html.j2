@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Access Logs</title>
+    <link rel="shortcut icon" href="favicon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta11/dist/css/tabler.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
+</head>
+
+<body>
+    <div class="page">
+        <header class="navbar navbar-expand-md navbar-light d-print-none">
+            <div class="container-xl">
+                <h1 class="navbar-brand">Access Logs</h1>
+            </div>
+        </header>
+        <div class="page-wrapper">
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="row row-deck row-cards">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">Views by date</h3>
+                                    <div id="views-by-date" class="chart-lg"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Visitors by country</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="ratio ratio-21x9">
+                                        <div>
+                                            <div id="map-world" class="w-100 h-100"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Visitors by city</h3>
+                                </div>
+                                <table class="table card-table table-vcenter">
+                                    <thead>
+                                        <tr>
+                                            <th>City</th>
+                                            <th>Visitors</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {%- for city in cities %}
+                                        <tr>
+                                            <td>{{ city.name }}</td>
+                                            <td>{{ city.count }}</td>
+                                        </tr>
+                                        {%- endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta11/dist/js/tabler.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        window.ApexCharts && (new ApexCharts(document.getElementById("views-by-date"), {
+            chart: {
+                type: "bar",
+                fontFamily: "inherit",
+                height: 240,
+                parentHeightOffset: 0,
+                toolbar: {
+                    show: false,
+                },
+                animations: {
+                    enabled: false,
+                },
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: "50%",
+                }
+            },
+            dataLabels: {
+                enabled: false,
+            },
+            fill: {
+                opacity: 1,
+            },
+            series: [{
+                name: "Visitors",
+                data: [
+                    {%- for day in days %}
+                    {{ day.count }},
+                    {%- endfor %}
+                ]
+            }],
+            grid: {
+                padding: {
+                    top: -20,
+                    right: 0,
+                    left: -4,
+                    bottom: -4
+                },
+                strokeDashArray: 4,
+                xaxis: {
+                    lines: {
+                        show: true
+                    }
+                },
+            },
+            xaxis: {
+                labels: {
+                    padding: 0,
+                },
+                tooltip: {
+                    enabled: false
+                },
+                axisBorder: {
+                    show: false,
+                },
+                type: "datetime",
+            },
+            yaxis: {
+                labels: {
+                    padding: 4
+                },
+            },
+            labels: [
+                {%- for day in days %}
+                "{{ day.name }}",
+                {%- endfor %}
+            ],
+            colors: ["#206bc4", "#79a6dc", "#bfe399"],
+            legend: {
+                show: false,
+            },
+        })).render();
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const map = new jsVectorMap({
+            selector: "#map-world",
+            map: "world",
+            backgroundColor: "transparent",
+            regionStyle: {
+                initial: {
+                    fill: "#f8fafc",
+                    stroke: "#e5e5e5",
+                    strokeWidth: 1,
+                }
+            },
+            zoomOnScroll: false,
+            zoomButtons: false,
+            markers: [
+                {%- for point in points %}
+                {name: "{{ point.name }}", coords: [{{ point.lat }}, {{ point.lon }}]},
+                {%- endfor %}
+            ],
+            visualizeData: {
+                scale: ["#f8fafc", "#206bc4"],
+                values: {
+                    {%- for country in countries %}
+                    "{{ country.name }}": {{ country.count }},
+                    {%- endfor %}
+                },
+            },
+        });
+        window.addEventListener("resize", () => {
+            map.updateSize();
+        });
+    });
+</script>
+</html>
