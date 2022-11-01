@@ -1,14 +1,21 @@
 # geologs
 
+Access logs parser that creates a small html report with analytics.
+
+## Run
+
 Install dependencies
 ```sh
 make deps
 ```
 
-Build and run
+Build
 ```sh
-# Debug version
-make debug
-# Release version
-make build run
+make debug # debug version
+make build # release version
+```
+
+Run
+```sh
+make run
 ```
