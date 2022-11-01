@@ -87,8 +87,9 @@ pub fn get_geodata(
 
     println!("IP addresses to resolve: {}", ips.len());
     for (i, ip) in ips.iter().enumerate() {
-        // Track progress - print each 100th line
-        if i > 0 && i % 100 == 0 {
+        // Track progress - print each 100th line, except cases when
+        // only cached data was used
+        if i > 0 && i % 100 == 0 && i as u32 > cached {
             println!("Progress: {} done ({} cached)", i, cached);
         }
         // Skip IP if it's in cache, and count cache hits
@@ -106,6 +107,9 @@ pub fn get_geodata(
             }
         };
         geo.insert(ip.clone(), geodata);
+    }
+    if ips.len() % 100 != 0 {
+        println!("Progress: {} done ({} cached)", ips.len(), cached);
     }
 
     save_cache(&geo, CACHE_FILE)?;
