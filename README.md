@@ -2,6 +2,13 @@
 
 Access logs parser that creates a small html report with analytics.
 
+## Config
+
+Copy config and populate values
+```sh
+cp .env.example .env
+```
+
 ## Run
 
 Install dependencies
