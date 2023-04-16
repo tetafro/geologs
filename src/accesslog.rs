@@ -34,7 +34,7 @@ impl std::fmt::Display for AccessLogLine {
 
 // Parse and filter input file into an AccessLog struct.
 // TODO: Pass filtering funtion as an argument.
-pub fn parse(file: &str) -> Result<AccessLog, Box<dyn Error>> {
+pub fn parse(file: &str, skip_invalid: bool) -> Result<AccessLog, Box<dyn Error>> {
     let content = fs::read_to_string(file)?;
 
     // Regexp for parsing each line
@@ -51,52 +51,66 @@ pub fn parse(file: &str) -> Result<AccessLog, Box<dyn Error>> {
     let mut i = 0;
     for line in content.split("\n") {
         i += 1;
-        if line.len() == 0 {
-            continue;
+        match parse_line(line, &re) {
+            Ok(Some(value)) => loglines.push(value),
+            Ok(None) => continue,
+            Err(err) => {
+                let msg = format!("invalid line {}: {}", i, err);
+                if skip_invalid {
+                    println!("Error: {}", msg);
+                    continue;
+                }
+                return Err(msg.into());
+            },
         }
-
-        // Parse line with regexp
-        let groups = match re.captures(line) {
-            Some(res) => res,
-            None => return Err(format!("invalid line: {}", i).into()),
-        };
-        if groups.len() != 7 {
-            return Err(format!("invalid line: {}", i).into());
-        }
-        let date = match groups.name("date") {
-            Some(res) => res.as_str(),
-            None => return Err(format!("invalid line, missing date: {}", i).into()),
-        };
-        let ip = match groups.name("ip") {
-            Some(res) => res.as_str(),
-            None => return Err(format!("invalid line, missing ip: {}", i).into()),
-        };
-        let path = match groups.name("path") {
-            Some(res) => res.as_str(),
-            None => return Err(format!("invalid line, missing path: {}", i).into()),
-        };
-        let user_agent = match groups.name("user_agent") {
-            Some(res) => res.as_str(),
-            None => return Err(format!("invalid line, missing user_agent: {}", i).into()),
-        };
-
-        // Filter out bots, and paths other than root
-        if path != "/" || user_agent.to_lowercase().contains("bot") {
-            continue;
-        }
-
-        // Change date's format
-        let dt = match NaiveDate::parse_from_str(date, "%d/%b/%Y") {
-            Ok(parsed) => parsed.format("%Y-%m-%d"),
-            Err(_) => return Err(format!("invalid time format on line: {}", i).into()),
-        };
-
-        // Save the line along with the other
-        loglines.push(AccessLogLine {
-            date: dt.to_string(),
-            ip: ip.to_string(),
-        });
     }
 
     Ok(AccessLog { lines: loglines })
+}
+
+fn parse_line(line: &str, re: &Regex) -> Result<Option<AccessLogLine>, Box<dyn Error>> {
+     if line.len() == 0 {
+        return Ok(None);
+    }
+
+    // Parse line with regexp
+    let groups = match re.captures(line) {
+        Some(res) => res,
+        None => return Err("invalid format".into()),
+    };
+    if groups.len() != 7 {
+        return Err("invalid format".into());
+    }
+    let date = match groups.name("date") {
+        Some(res) => res.as_str(),
+        None => return Err("missing date: {}".into()),
+    };
+    let ip = match groups.name("ip") {
+        Some(res) => res.as_str(),
+        None => return Err("missing ip: {}".into()),
+    };
+    let path = match groups.name("path") {
+        Some(res) => res.as_str(),
+        None => return Err("missing path: {}".into()),
+    };
+    let user_agent = match groups.name("user_agent") {
+        Some(res) => res.as_str(),
+        None => return Err("missing user_agent: {}".into()),
+    };
+
+    // Filter out bots, and paths other than root
+    if path != "/" || user_agent.to_lowercase().contains("bot") {
+        return Ok(None);
+    }
+
+    // Change date's format
+    let dt = match NaiveDate::parse_from_str(date, "%d/%b/%Y") {
+        Ok(parsed) => parsed.format("%Y-%m-%d"),
+        Err(_) => return Err("invalid time format on line: {}".into()),
+    };
+
+    return Ok(Some(AccessLogLine{
+        date: dt.to_string(),
+        ip: ip.to_string(),
+    }));
 }

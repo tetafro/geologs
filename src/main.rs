@@ -24,6 +24,7 @@ macro_rules! fatal {
 struct Config {
     api_addr: String,
     api_key: String,
+    skip_invalid: bool,
 }
 
 fn main() {
@@ -44,7 +45,7 @@ fn main() {
     let logfile = &args[1];
 
     // Parse logfile
-    let log = accesslog::parse(logfile).unwrap_or_else(|err| {
+    let log = accesslog::parse(logfile, conf.skip_invalid).unwrap_or_else(|err| {
         fatal!("Failed to read input file: {}", err);
     });
 
