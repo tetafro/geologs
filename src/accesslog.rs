@@ -57,7 +57,7 @@ pub fn parse(file: &str, skip_invalid: bool) -> Result<AccessLog, Box<dyn Error>
             Err(err) => {
                 let msg = format!("invalid line {}: {}", i, err);
                 if skip_invalid {
-                    println!("Error: {}", msg);
+                    println!("Warning: {}", msg);
                     continue;
                 }
                 return Err(msg.into());
