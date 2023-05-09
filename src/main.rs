@@ -55,7 +55,7 @@ fn main() {
             fatal!("Failed to get geodata: {}", err);
         });
 
-    // Save parsed and resloved data in a human readable format
+    // Save parsed and resolved data in a human readable format
     report::generate(log, geo).unwrap_or_else(|err| {
         fatal!("Failed to build report: {}", err);
     });
