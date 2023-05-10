@@ -1,9 +1,7 @@
-use std::cmp;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::error::Error;
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::iter::FromIterator;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -17,20 +15,22 @@ const TEMPLATE_FILE: &str = "index.html.j2";
 const TEMPLATE_NAME: &str = "index";
 const REPORT_FILE: &str = "index.html";
 
-// Report contains ata for producing a human-readable representation.
+// ReportLine is a single entry of a report.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct Report {
-    days: Vec<ReportCounter>,
-    countries: Vec<ReportCounter>,
-    cities: Vec<ReportCounter>,
-    points: Vec<geodata::Point>,
+pub struct ReportLine {
+    pub date: String,
+    pub ip: String,
+    pub country: String,
+    pub country_code: String,
+    pub city: String,
+    pub lat: f32,
+    pub lon: f32,
 }
 
-// Named counter for representing report stats.
+// Report combines all data for further processing by frontend.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct ReportCounter {
-    name: String,
-    count: u32,
+struct Report {
+    lines: Vec<ReportLine>,
 }
 
 // Build a report and save it to a file.
@@ -38,86 +38,22 @@ pub fn generate(
     log: accesslog::AccessLog,
     geo: HashMap<String, geodata::GeoData>,
 ) -> Result<(), Box<dyn Error>> {
-    let rep = match build(log, geo) {
-        Ok(val) => val,
-        Err(err) => return Err(format!("build report: {}", err).into()),
-    };
+    let mut rep: Report = Report{lines: Vec::new()};
 
-    match save(&rep) {
-        Ok(_) => Ok(()),
-        Err(err) => Err(format!("save report: {}", err).into()),
-    }
-}
-
-// Build a report from input data.
-fn build(
-    log: accesslog::AccessLog,
-    geo: HashMap<String, geodata::GeoData>,
-) -> Result<Report, Box<dyn Error>> {
-    // Get lists of unique ips by different entities
-    let mut days: HashMap<String, Vec<String>> = HashMap::new();
-    let mut countries: HashMap<String, Vec<String>> = HashMap::new();
-    let mut cities: HashMap<String, Vec<String>> = HashMap::new();
-    let mut points: HashSet<geodata::Point> = HashSet::new();
     for line in log.lines {
-        let g = match geo.get(&line.ip) {
-            Some(res) => res,
-            None => return Err(format!("no matching geodata for ip '{}'", line.ip).into()),
-        };
-        days.entry(line.date.clone())
-            .or_insert(Vec::new())
-            .push(line.ip.clone());
-        countries
-            .entry(g.country_code.clone())
-            .or_insert(Vec::new())
-            .push(line.ip.clone());
-        cities
-            .entry(g.city.clone())
-            .or_insert(Vec::new())
-            .push(line.ip.clone());
-        points.insert(geodata::Point {
-            name: g.city.clone(),
-            lat: g.lat,
-            lon: g.lon,
-        });
+        if let Some(geodata) = geo.get(&line.ip) {
+            rep.lines.push(ReportLine{
+                date: line.date,
+                ip: line.ip,
+                country: geodata.country.clone(),
+                country_code: geodata.country_code.clone(),
+                city: geodata.city.clone(),
+                lat: geodata.lat,
+                lon: geodata.lon,
+            });
+        }
     }
 
-    // Get the number of elements in each ips hashset
-    let mut rep: Report = Report {
-        days: Vec::new(),
-        countries: Vec::new(),
-        cities: Vec::new(),
-        points: points.into_iter().collect(),
-    };
-    for (day, ips) in days.iter() {
-        rep.days.push(ReportCounter {
-            name: day.clone(),
-            count: HashSet::<String>::from_iter(ips.clone()).len() as u32,
-        });
-    }
-    for (country, ips) in countries.iter() {
-        rep.countries.push(ReportCounter {
-            name: country.clone(),
-            count: HashSet::<String>::from_iter(ips.clone()).len() as u32,
-        });
-    }
-    for (city, ips) in cities.iter().filter(|(k, _)| !k.is_empty()) {
-        rep.cities.push(ReportCounter {
-            name: city.clone(),
-            count: HashSet::<String>::from_iter(ips.clone()).len() as u32,
-        });
-    }
-
-    rep.days.sort_by(|a, b| a.name.cmp(&b.name));
-    rep.countries.sort_by(|a, b| a.name.cmp(&b.name));
-    rep.cities.sort_by(|a, b| b.count.cmp(&a.count));
-    rep.cities = rep.cities[..cmp::min(rep.cities.len(), 8)].to_vec();
-
-    Ok(rep)
-}
-
-// Render report data and save it to a file.
-fn save(rep: &Report) -> Result<(), Box<dyn Error>> {
     // Init and render template with report data
     let mut tera = Tera::default();
     match tera.add_template_file(TEMPLATE_FILE, Some(TEMPLATE_NAME)) {
