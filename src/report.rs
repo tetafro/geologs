@@ -9,9 +9,9 @@ use tera::{Context, Tera};
 
 use crate::accesslog;
 use crate::geodata;
+use crate::template;
 
 // Report-file related files and parameters.
-const TEMPLATE_FILE: &str = "index.html.j2";
 const TEMPLATE_NAME: &str = "index";
 const REPORT_FILE: &str = "index.html";
 
@@ -56,7 +56,7 @@ pub fn generate(
 
     // Init and render template with report data
     let mut tera = Tera::default();
-    match tera.add_template_file(TEMPLATE_FILE, Some(TEMPLATE_NAME)) {
+    match tera.add_raw_template(TEMPLATE_NAME, template::TEMPLATE) {
         Ok(_) => (),
         Err(err) => return Err(format!("parse template: {}", err).into()),
     };

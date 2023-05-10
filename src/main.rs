@@ -7,6 +7,7 @@ use serde::Deserialize;
 mod accesslog;
 mod geodata;
 mod report;
+mod template;
 
 // Shortcut for println + exit(1).
 #[macro_export]
