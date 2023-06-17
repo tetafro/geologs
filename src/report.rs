@@ -19,36 +19,41 @@ const TEMPLATE: &str = include_str!("../index.html.j2");
 const TEMPLATE_NAME: &str = "index";
 const HTML_DEPS_DIR: &str = "static";
 
-// HtmlDep describes a file that is required by the HTML template (CSS or JS).
+// HtmlDep describes a file that is required by the HTML template
+// (e.g. images, CSS, JS files).
 struct HtmlDep {
-    content: &'static str,
+    content: &'static [u8],
     file: &'static str,
 }
 
 // A list of all dependencies with their content.
-const HTML_DEPS: [HtmlDep; 6] = [
+const HTML_DEPS: [HtmlDep; 7] = [
     HtmlDep{
-        content: include_str!("../static/apexcharts.js"),
+        content: include_bytes!("../static/favicon.png"),
+        file: "favicon.png",
+    },
+    HtmlDep{
+        content: include_bytes!("../static/apexcharts.js"),
         file: "apexcharts.js",
     },
     HtmlDep{
-        content: include_str!("../static/jsvectormap.js"),
+        content: include_bytes!("../static/jsvectormap.js"),
         file: "jsvectormap.js",
     },
     HtmlDep{
-        content: include_str!("../static/jsvectormap.min.css"),
+        content: include_bytes!("../static/jsvectormap.min.css"),
         file: "jsvectormap.min.css",
     },
     HtmlDep{
-        content: include_str!("../static/tabler.js"),
+        content: include_bytes!("../static/tabler.js"),
         file: "tabler.js",
     },
     HtmlDep{
-        content: include_str!("../static/tabler.min.css"),
+        content: include_bytes!("../static/tabler.min.css"),
         file: "tabler.min.css",
     },
     HtmlDep{
-        content: include_str!("../static/world.js"),
+        content: include_bytes!("../static/world.js"),
         file: "world.js",
     },
 ];
@@ -131,7 +136,7 @@ pub fn generate(
 
 // Create HTML dependencies files and directories.
 fn html_deps() -> Result<(), Box<dyn Error>> {
-    match fs::create_dir(HTML_DEPS_DIR) {
+    match fs::create_dir_all(HTML_DEPS_DIR) {
         Ok(_) => (),
         Err(err) => return Err(format!("create directory {}: {}", HTML_DEPS_DIR, err).into()),
     };
