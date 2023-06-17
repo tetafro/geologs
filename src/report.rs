@@ -1,3 +1,4 @@
+use std::fs;
 use std::collections::{HashMap};
 use std::error::Error;
 use std::fs::OpenOptions;
@@ -9,10 +10,48 @@ use tera::{Context, Tera};
 
 use crate::accesslog;
 use crate::geodata;
-use crate::template;
+
+// NOTE: `include_str!` macro is not cross-platform for paths.
+// https://github.com/rust-lang/rust/issues/75075
 
 // Report-file related files and parameters.
+const TEMPLATE: &str = include_str!("../index.html.j2");
 const TEMPLATE_NAME: &str = "index";
+const HTML_DEPS_DIR: &str = "static";
+
+// HtmlDep describes a file that is required by the HTML template (CSS or JS).
+struct HtmlDep {
+    content: &'static str,
+    file: &'static str,
+}
+
+// A list of all dependencies with their content.
+const HTML_DEPS: [HtmlDep; 6] = [
+    HtmlDep{
+        content: include_str!("../static/apexcharts.js"),
+        file: "apexcharts.js",
+    },
+    HtmlDep{
+        content: include_str!("../static/jsvectormap.js"),
+        file: "jsvectormap.js",
+    },
+    HtmlDep{
+        content: include_str!("../static/jsvectormap.min.css"),
+        file: "jsvectormap.min.css",
+    },
+    HtmlDep{
+        content: include_str!("../static/tabler.js"),
+        file: "tabler.js",
+    },
+    HtmlDep{
+        content: include_str!("../static/tabler.min.css"),
+        file: "tabler.min.css",
+    },
+    HtmlDep{
+        content: include_str!("../static/world.js"),
+        file: "world.js",
+    },
+];
 
 // ReportLine is a single entry of a report.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,7 +95,7 @@ pub fn generate(
 
     // Init and render template with report data
     let mut tera = Tera::default();
-    match tera.add_raw_template(TEMPLATE_NAME, template::TEMPLATE) {
+    match tera.add_raw_template(TEMPLATE_NAME, TEMPLATE) {
         Ok(_) => (),
         Err(err) => return Err(format!("parse template: {}", err).into()),
     };
@@ -67,6 +106,11 @@ pub fn generate(
     let data = match tera.render(TEMPLATE_NAME, &ctx) {
         Ok(data) => data,
         Err(err) => return Err(format!("render template: {}", err).into()),
+    };
+
+    match html_deps() {
+        Ok(_) => (),
+        Err(err) => return Err(format!("generate HTML dependencies: {}", err).into()),
     };
 
     // Save result to a file
@@ -83,4 +127,20 @@ pub fn generate(
         },
         Err(err) => return Err(format!("open file: {}", err).into()),
     }
+}
+
+// Create HTML dependencies files and directories.
+fn html_deps() -> Result<(), Box<dyn Error>> {
+    match fs::create_dir(HTML_DEPS_DIR) {
+        Ok(_) => (),
+        Err(err) => return Err(format!("create directory {}: {}", HTML_DEPS_DIR, err).into()),
+    };
+    for dep in HTML_DEPS {
+        let p = Path::new(HTML_DEPS_DIR).join(dep.file);
+        match fs::write(&p, dep.content) {
+            Ok(_) => (),
+            Err(err) => return Err(format!("save file {}: {}", p.display(), err).into()),
+        };
+    }
+    Ok(())
 }

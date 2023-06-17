@@ -5,7 +5,6 @@ use clap::Parser;
 mod accesslog;
 mod geodata;
 mod report;
-mod template;
 
 // Output report file.
 const REPORT_FILE: &str = "index.html";
