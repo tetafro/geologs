@@ -5,6 +5,10 @@ Access logs parser that creates a small html report with analytics.
 - Uses [ipgeolocation.io](https://ipgeolocation.io) as a source of geodata.
 - Uses [Tabler](https://tabler.io) for HTML report.
 
+## Screenshot
+
+![screenshot](./screenshot.png)
+
 ## Install
 
 Download binary from [releases page](https://github.com/tetafro/geologs/releases).
