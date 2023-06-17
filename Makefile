@@ -6,14 +6,6 @@ deps:
 format:
 	cargo fmt
 
-.PHONY: debug
-debug:
-	cargo run access.log
-
 .PHONY: build
 build:
 	cargo build --release
-
-.PHONY: run
-run:
-	./target/release/geologs access.log

@@ -7,6 +7,9 @@ mod geodata;
 mod report;
 mod template;
 
+// Output report file.
+const REPORT_FILE: &str = "index.html";
+
 // Shortcut for println + exit(1).
 #[macro_export]
 macro_rules! fatal {
@@ -22,12 +25,12 @@ macro_rules! fatal {
 #[derive(Parser, Debug)]
 #[command(about = "Parse HTTP server access logs and save an HTML report with statistics.")]
 struct Args {
-    ///
+    /// Geodata API address
     #[arg(short = 'a', long = "api-addr", default_value_t = String::from("https://api.ipgeolocation.io/ipgeo"))]
     api_addr: String,
 
     /// Geodata API authentication key
-    #[arg(short = 'k', long = "api-key", required = true)]
+    #[arg(short = 'k', long = "api-key", default_value_t = String::from(""))]
     api_key: String,
 
     /// Fail on invalid lines in logs instead skipping them
@@ -35,7 +38,6 @@ struct Args {
     fail_invalid: bool,
 
     /// Access log file path
-    #[arg(short = 'f', long = "file", default_value_t = String::from("access.log"))]
     file: String,
 }
 
@@ -54,7 +56,7 @@ fn main() {
         });
 
     // Save parsed and resolved data in a human readable format
-    report::generate(log, geo).unwrap_or_else(|err| {
+    report::generate(log, geo, REPORT_FILE).unwrap_or_else(|err| {
         fatal!("Failed to build report: {}", err);
     });
     println!("Done");

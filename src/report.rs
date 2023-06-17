@@ -13,7 +13,6 @@ use crate::template;
 
 // Report-file related files and parameters.
 const TEMPLATE_NAME: &str = "index";
-const REPORT_FILE: &str = "index.html";
 
 // ReportLine is a single entry of a report.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,6 +36,7 @@ struct Report {
 pub fn generate(
     log: accesslog::AccessLog,
     geo: HashMap<String, geodata::GeoData>,
+    file: &str,
 ) -> Result<(), Box<dyn Error>> {
     let mut rep: Report = Report{lines: Vec::new()};
 
@@ -70,7 +70,7 @@ pub fn generate(
     };
 
     // Save result to a file
-    let path = Path::new(REPORT_FILE);
+    let path = Path::new(file);
     match OpenOptions::new()
         .truncate(true)
         .write(true)

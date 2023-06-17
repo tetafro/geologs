@@ -14,7 +14,7 @@ Download binary from [releases page](https://github.com/tetafro/geologs/releases
 Signup on [ipgeolocation.io](https://ipgeolocation.io) to get a free API key.
 
 ```sh
-geologs --api-key qwerty --file ./access.log
+geologs -k my-api-key ./access.log
 ```
 
 ## Development
@@ -32,7 +32,7 @@ make build # release version
 
 Run
 ```sh
-make run
+./target/release/geologs --help
 ```
 
 Update Javascript and CSS dependencies
