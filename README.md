@@ -2,14 +2,22 @@
 
 Access logs parser that creates a small html report with analytics.
 
-## Config
+- Uses [ipgeolocation.io](https://ipgeolocation.io) as a source of geodata.
+- Uses [Tabler](https://tabler.io) for HTML report.
 
-Copy config and populate values
-```sh
-cp .env.example .env
-```
+## Install
+
+Download binary from [releases page](https://github.com/tetafro/geologs/releases).
 
 ## Run
+
+Signup on [ipgeolocation.io](https://ipgeolocation.io) to get a free API key.
+
+```sh
+geologs --api-key qwerty --file ./access.log
+```
+
+## Development
 
 Install dependencies
 ```sh
@@ -27,12 +35,7 @@ Run
 make run
 ```
 
-## Dependencies
-
-- [Tabler](https://tabler.io/docs/getting-started/download)
-- [JSVectorMap](https://jvm-docs.vercel.app/docs/installation#cdn)
-
-Update
+Update Javascript and CSS dependencies
 ```sh
 tabler=1.0.0-beta17
 curl -L -o static/tabler.js \

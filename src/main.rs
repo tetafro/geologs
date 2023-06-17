@@ -1,8 +1,6 @@
-use std::env;
 use std::process;
 
-use dotenv::dotenv;
-use serde::Deserialize;
+use clap::Parser;
 
 mod accesslog;
 mod geodata;
@@ -21,38 +19,37 @@ macro_rules! fatal {
 }
 
 // Main application config.
-#[derive(Deserialize)]
-struct Config {
+#[derive(Parser, Debug)]
+#[command(about = "Parse HTTP server access logs and save an HTML report with statistics.")]
+struct Args {
+    ///
+    #[arg(short = 'a', long = "api-addr", default_value_t = String::from("https://api.ipgeolocation.io/ipgeo"))]
     api_addr: String,
+
+    /// Geodata API authentication key
+    #[arg(short = 'k', long = "api-key", required = true)]
     api_key: String,
-    skip_invalid: bool,
+
+    /// Fail on invalid lines in logs instead skipping them
+    #[arg(short = 'i', long = "fail-invalid", default_value_t = true)]
+    fail_invalid: bool,
+
+    /// Access log file path
+    #[arg(short = 'f', long = "file", default_value_t = String::from("access.log"))]
+    file: String,
 }
 
 fn main() {
-    // Read config from env
-    dotenv().ok();
-    let conf = match envy::from_env::<Config>() {
-        Ok(value) => value,
-        Err(err) => {
-            fatal!("Failed to parse config: {}", err);
-        }
-    };
-
-    // Get input logfile
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        fatal!("No input file provided");
-    }
-    let logfile = &args[1];
+    let args = Args::parse();
 
     // Parse logfile
-    let log = accesslog::parse(logfile, conf.skip_invalid).unwrap_or_else(|err| {
+    let log = accesslog::parse(&args.file, args.fail_invalid).unwrap_or_else(|err| {
         fatal!("Failed to read input file: {}", err);
     });
 
     // Get geodata from remote API or cache
     let geo =
-        geodata::get_geodata(&conf.api_addr, &conf.api_key, log.get_ips()).unwrap_or_else(|err| {
+        geodata::get_geodata(&args.api_addr, &args.api_key, log.get_ips()).unwrap_or_else(|err| {
             fatal!("Failed to get geodata: {}", err);
         });
 

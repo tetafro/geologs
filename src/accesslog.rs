@@ -34,7 +34,7 @@ impl std::fmt::Display for AccessLogLine {
 
 // Parse and filter input file into an AccessLog struct.
 // TODO: Pass filtering funtion as an argument.
-pub fn parse(file: &str, skip_invalid: bool) -> Result<AccessLog, Box<dyn Error>> {
+pub fn parse(file: &str, fail_invalid: bool) -> Result<AccessLog, Box<dyn Error>> {
     let content = fs::read_to_string(file)?;
 
     // Regexp for parsing each line
@@ -56,11 +56,10 @@ pub fn parse(file: &str, skip_invalid: bool) -> Result<AccessLog, Box<dyn Error>
             Ok(None) => continue,
             Err(err) => {
                 let msg = format!("invalid line {}: {}", i, err);
-                if skip_invalid {
-                    println!("Warning: {}", msg);
-                    continue;
+                if fail_invalid {
+                    return Err(msg.into());
                 }
-                return Err(msg.into());
+                println!("Warning: {}", msg);
             },
         }
     }
