@@ -34,7 +34,7 @@ struct Args {
     api_key: String,
 
     /// Fail on invalid lines in logs instead skipping them
-    #[arg(short = 'i', long = "fail-invalid", default_value_t = true)]
+    #[arg(short = 'i', long = "fail-invalid", default_value_t = false)]
     fail_invalid: bool,
 
     /// Access log file path
