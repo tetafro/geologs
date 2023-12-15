@@ -89,7 +89,7 @@ pub fn get_geodata(
     for (i, ip) in ips.iter().enumerate() {
         // Track progress - print each 100th line, except cases when
         // only cached data was used
-        if i > 0 && i % 100 == 0 && i as u32 > cached {
+        if i > 0 && i % 1000 == 0 && i as u32 > cached {
             println!("Progress: {} done ({} cached)", i, cached);
         }
         // Skip IP if it's in cache, and count cache hits
