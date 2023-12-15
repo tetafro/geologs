@@ -37,14 +37,14 @@ struct Args {
     fail_invalid: bool,
 
     /// Access log file path
-    file: String,
+    files: Vec<String>,
 }
 
 fn main() {
     let args = Args::parse();
 
-    // Parse logfile
-    let log = accesslog::parse(&args.file, args.fail_invalid).unwrap_or_else(|err| {
+    // Parse logfiles
+    let log = accesslog::parse(args.files, args.fail_invalid).unwrap_or_else(|err| {
         fatal!("Failed to read input file: {}", err);
     });
 

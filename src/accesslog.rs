@@ -34,8 +34,12 @@ impl std::fmt::Display for AccessLogLine {
 
 // Parse and filter input file into an AccessLog struct.
 // TODO: Pass filtering funtion as an argument.
-pub fn parse(file: &str, fail_invalid: bool) -> Result<AccessLog, Box<dyn Error>> {
-    let content = fs::read_to_string(file)?;
+pub fn parse(files: Vec<String>, fail_invalid: bool) -> Result<AccessLog, Box<dyn Error>> {
+    let mut content: String = String::new();
+    for file in files {
+        let c = fs::read_to_string(file)?;
+        content.push_str(&c);
+    }
 
     // Regexp for parsing each line
     let re = Regex::new(concat!(
