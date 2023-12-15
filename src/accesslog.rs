@@ -43,7 +43,7 @@ pub fn parse(files: Vec<String>, fail_invalid: bool) -> Result<AccessLog, Box<dy
 
     // Regexp for parsing each line
     let re = Regex::new(concat!(
-        r#"^\[(?P<date>[0-9]{2}/[A-Za-z]{3}/[0-9]{4}).+\] "#,
+        r#"^\[(?P<date>[0-9]{2}-[0-9]{2}-[0-9]{4}).+\] "#,
         r#"(?P<ip>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).* "#,
         r#"(?P<path>/.*) "#,
         r#"(?P<resp_code>[0-9]{3}) "#,
@@ -107,7 +107,7 @@ fn parse_line(line: &str, re: &Regex) -> Result<Option<AccessLogLine>, Box<dyn E
     }
 
     // Change date's format
-    let dt = match NaiveDate::parse_from_str(date, "%d/%b/%Y") {
+    let dt = match NaiveDate::parse_from_str(date, "%d-%m-%Y") {
         Ok(parsed) => parsed.format("%Y-%m-%d"),
         Err(_) => return Err("invalid time format on line: {}".into()),
     };
