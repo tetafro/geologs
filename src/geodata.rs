@@ -84,6 +84,7 @@ pub fn get_geodata(
 ) -> Result<HashMap<String, GeoData>, Box<dyn Error>> {
     let mut geo = read_cache(CACHE_FILE)?;
     let mut cached: u32 = 0;
+    let mut cities: HashMap<[String; 2], [f32; 2]> = HashMap::new();
 
     println!("IP addresses to resolve: {}", ips.len());
     for (i, ip) in ips.iter().enumerate() {
@@ -98,7 +99,7 @@ pub fn get_geodata(
             continue;
         }
         // Make a call to remote API
-        let geodata = match resolve(api_addr, api_key, &ip) {
+        let mut geodata = match resolve(api_addr, api_key, &ip) {
             Ok(v) => v,
             Err(e) => {
                 // Save current cache to not lose progress on next run
@@ -106,6 +107,13 @@ pub fn get_geodata(
                 return Err(e);
             }
         };
+
+        // Make sure each city has the same lat/lon all the time
+        cities.entry([geodata.city.clone(), geodata.country.clone()])
+            .or_insert([geodata.lat, geodata.lon]);
+        geodata.lat = cities.get(&[geodata.city.clone(), geodata.country.clone()]).unwrap()[0];
+        geodata.lon = cities.get(&[geodata.city.clone(), geodata.country.clone()]).unwrap()[1];
+
         geo.insert(ip.clone(), geodata);
     }
     if ips.len() % 100 != 0 {
