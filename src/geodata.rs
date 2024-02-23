@@ -38,7 +38,7 @@ impl PartialEq for GeoData {
 // Implementation of full equality. Same as PartialEq.
 impl Eq for GeoData {}
 
-// Named point on ф map.
+// Named point on a map.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Point {
     pub name: String,
@@ -101,7 +101,7 @@ pub fn get_geodata(
         let geodata = match resolve(api_addr, api_key, &ip) {
             Ok(v) => v,
             Err(e) => {
-                // Save current cache to not loose progress on next run
+                // Save current cache to not lose progress on next run
                 save_cache(&geo, CACHE_FILE)?;
                 return Err(e);
             }
