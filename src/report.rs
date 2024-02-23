@@ -1,5 +1,5 @@
 use std::fs;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::error::Error;
 use std::fs::OpenOptions;
 use std::io::Write;
