@@ -102,7 +102,9 @@ fn parse_line(line: &str, re: &Regex) -> Result<Option<AccessLogLine>, Box<dyn E
     };
 
     // Filter out bots, and paths other than root
-    if path != "/" || user_agent.to_lowercase().contains("bot") {
+    if path != "/" ||
+        user_agent.to_lowercase().contains("bot") ||
+        user_agent.to_lowercase().contains("blackbox exporter") {
         return Ok(None);
     }
 
